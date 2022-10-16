@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Grader {
 
@@ -58,35 +59,21 @@ public class Grader {
 
     public Student findOverallTopper(List<Student> gradedStudents) {
         // TODO: add your implementation here
-        Double topperScore=Double.MIN_VALUE;
-        Student topperStudent=new Student();
-        for(Student student:gradedStudents){
-            if(student.getFinalScore()>topperScore){
-                topperScore= student.getFinalScore();
-                topperStudent=student;
-            }
-        }
+        Student topperStudent= gradedStudents.stream().max(Comparator.comparingDouble(Student::getFinalScore)).get();
         return new Student(topperStudent.getFirstname(), topperStudent.getLastname(), topperStudent.getUniversity());
     }
 
     public Map<String, Student> findTopperPerUniversity(List<Student> gradedStudents) {
         // TODO: add your implementation here
-        Map<String, Student> finalTopper = new HashMap<>();
-        Map<String,Student> topperPerUniversity=new HashMap<>();
-        for(Student student:gradedStudents){
-            if (topperPerUniversity.get(student.getUniversity())!=null) {
-                if(student.getFinalScore()>topperPerUniversity.get(student.getUniversity()).getFinalScore()){
-                    topperPerUniversity.put(student.getUniversity(), student);
-                }
-            }
-            else{
-                topperPerUniversity.put(student.getUniversity(), student);
-            }
-        }
-        for(Map.Entry<String, Student> topper :topperPerUniversity.entrySet()){
+        Map<String, Student> map = gradedStudents.stream()
+                .collect(Collectors.groupingBy(Student::getUniversity,
+                        Collectors.collectingAndThen(Collectors.maxBy(Comparator.comparing(Student::getFinalScore)), r -> r.get())));
+
+        Map<String, Student> finalTopperPerUniversity = new HashMap<>();
+        for(Map.Entry<String, Student> topper :map.entrySet()){
             Student student = topper.getValue();
-            finalTopper.put(student.getUniversity(), new Student(student.getFirstname(), student.getLastname(), student.getUniversity()));
+            finalTopperPerUniversity.put(student.getUniversity(), new Student(student.getFirstname(), student.getLastname(), student.getUniversity()));
         }
-        return finalTopper;
+        return finalTopperPerUniversity;
     }
 }
